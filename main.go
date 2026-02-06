@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/adrianosela/catsnet/internal/keyloader"
 	"go.uber.org/zap"
 	"tailscale.com/tsnet"
 )
@@ -22,9 +23,14 @@ func main() {
 	var addr string
 	var authkey string
 	var hostname string
+	var certFilepath string
+	var keyFilepath string
+
 	flag.StringVar(&addr, "addr", ":80", "address to listen on")
 	flag.StringVar(&authkey, "authkey", "", "Tailscale auth key")
 	flag.StringVar(&hostname, "hostname", "catsnet", "hostname to use for Tailscale machine")
+	flag.StringVar(&certFilepath, "cert", "./.sample_data/ca-cert.pem", "CA certificate PEM filepath")
+	flag.StringVar(&keyFilepath, "key", "./.sample_data/ca-key.pem", "CA private key PEM filepath")
 	flag.Parse()
 
 	if authkey == "" {
@@ -60,7 +66,18 @@ func main() {
 		ln = tls.NewListener(ln, &tls.Config{GetCertificate: lc.GetCertificate})
 	}
 
-	err = http.Serve(ln, getHandler(logger, lc))
+	keyLoader, err := keyloader.NewStaticLoader(certFilepath, keyFilepath)
+	if err != nil {
+		logger.Fatal("failed to initialize static key loader", zap.Error(err))
+	}
+
+	handler := getHandler(
+		logger,
+		lc,
+		keyLoader,
+	)
+
+	err = http.Serve(ln, handler)
 	if err != nil {
 		logger.Fatal("failed to serve HTTP over tsnet listener", zap.Error(err))
 	}

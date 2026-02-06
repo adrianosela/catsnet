@@ -16,9 +16,15 @@ help: ## Print this help menu
 .PHONY: run
 run: ## Run the catsnet service
 	$(call check_ts_authkey)
-	@go run . -authkey=$$CATSNET_TS_AUTHKEY
+	@go run . \
+		-authkey=$$CATSNET_TS_AUTHKEY \
+		-cert="./.sample_data/ca-cert.pem" \
+		-key="./.sample_data/ca-key.pem"
 
 .PHONY: build
 build: ## Build binary for current OS/ARCH
-	go build -o $(PROGRAM_NAME) .
+	@go build -o $(PROGRAM_NAME) .
 
+.PHONY: lint
+lint: ## Lint code
+	@golangci-lint run ./...
