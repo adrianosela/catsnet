@@ -1,5 +1,6 @@
 SHELL := /bin/bash
-PROGRAM_NAME := catsnet
+SERVER_PROGRAM_NAME := catsnet
+CLI_PROGRAM_NAME := cats
 
 # Helper function to check if CATSNET_TS_AUTHKEY is set
 define check_ts_authkey
@@ -22,8 +23,13 @@ run: ## Run the catsnet service
 		-key="./.sample_data/ca-key.pem"
 
 .PHONY: build
-build: ## Build binary for current OS/ARCH
-	@go build -o $(PROGRAM_NAME) .
+build: ## Build server binary for current OS/ARCH
+	@go build -o $(SERVER_PROGRAM_NAME) .
+
+.PHONY: cli
+cli: ## Build CLI binary for current OS/ARCH and move to binaries path
+	@go build -o $(CLI_PROGRAM_NAME) ./cli/main.go
+	@mv $(CLI_PROGRAM_NAME) /usr/local/bin/$(CLI_PROGRAM_NAME)
 
 .PHONY: lint
 lint: ## Lint code
